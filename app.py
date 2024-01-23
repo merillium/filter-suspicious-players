@@ -5,6 +5,8 @@ import os
 
 from flask import Flask, render_template
 
+from model import AnomalyDetectionModel
+
 # pylint: disable=C0103
 app = Flask(__name__)
 

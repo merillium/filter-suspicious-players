@@ -1,5 +1,5 @@
 import time
-from multiprocessing import Process, Queue
+import multiprocessing
 import tqdm
 import pandas as pd
 import lichess.api
@@ -25,7 +25,10 @@ all_players = all_player_features.reset_index()['player'].tolist()
 ## tosViolation = cheating or rating manipulation
 ## open = account in good standing
 
-def get_player_account_status(player_name: str, account_statuses: dict):
+def get_player_account_status(queue):
+    player = queue.get() ## we ensure the player is also the first in the queue (FIFO)
+    account_statuses = queue.get()
+    
     try:
         ## this will halt indefinitely if our request has hit the lichess API rate limit
         user = lichess.api.user(player_name)
@@ -37,18 +40,25 @@ def get_player_account_status(player_name: str, account_statuses: dict):
             account_statuses[player] = "open"
     except ApiHttpError: 
         account_statuses[player] = "not found"
-    
+
 
 ## initialize VPN
 initialize_VPN(save=1, area_input=['complete rotation'])
 
-## get account status for each player
-account_statuses = {}
+
+
 
 for player in tqdm(all_players):
 
     ## check if get_player_account_status hangs
-    
+    ## create account_statuses dictionary status for each player
+    queue = multiprocessing.Queue()
+    queue.put(player)
+    queue.put(account_statuses)
+
+    p = multiprocessing.Manager().dict()
+    p.start()
+    p.join()
 
     ## if if hangs, rotate VPN and try again
     if account_status == "not found":
@@ -67,27 +77,3 @@ all_player_features['account_status'] = account_statuses
 
 ## save dataframe
 all_player_features.to_csv(f'../lichess_player_data/{BASE_FILE_NAME}_labeled_player_features.csv')
-
-## GUIDE
-
-# import multiprocessing
-
-
-# def worker(procnum, return_dict):
-#     """worker function"""
-#     print(str(procnum) + " represent!")
-#     return_dict[procnum] = procnum
-
-
-# if __name__ == "__main__":
-#     manager = multiprocessing.Manager()
-#     return_dict = manager.dict()
-#     jobs = []
-#     for i in range(5):
-#         p = multiprocessing.Process(target=worker, args=(i, return_dict))
-#         jobs.append(p)
-#         p.start()
-
-#     for proc in jobs:
-#         proc.join()
-#     print(return_dict.values())

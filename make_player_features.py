@@ -1,13 +1,12 @@
-import requests
-import time
+import lichess.api
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-FILE_NAME = 'lichess_db_standard_rated_2015-01'
+BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
 
-all_player_games_df = pd.read_csv(f'../lichess_player_data/{FILE_NAME}.csv', index_col=[0,1],)
+all_player_games_df = pd.read_csv(f'../lichess_player_data/{BASE_FILE_NAME}.csv', index_col=[0,1],)
 all_player_games_df.index = all_player_games_df.index.set_names(['player','time_control'])
 
 ## filter out users who have not played enough games
@@ -90,60 +89,5 @@ rating_bin_labels = [f"{str(int(x))} - {str(int(x)+100)}" for x in rating_bins[:
 all_player_features['rating_bin'] = pd.cut(all_player_features['mean_rating'], rating_bins, right=True, labels=rating_bins[:-1]).astype(int)
 # all_player_features['rating_bin_label'] = pd.cut(all_player_features['mean_rating'], rating_bins, right=True, labels=rating_bin_labels)
 
-## this is used to approximately label players as potentially suspicious or not
-## closed account = suspicious
-## methods: python-lichess can make API requests
-## or beautiful soup may nor may not be able to scrape lichess player pages
-
-## if this is time intensive, consider benchmarks to compare python-lichess vs bs4
-def get_player_account_status(
-    player_name: str, 
-    max_retry_attempts: int = 3,
-    min_wait_time: int = 61,
-):
-    URL = f"https://lichess.org/@/{player_name}"
-
-    ## from lichess api documentation:
-    # All requests are rate limited using various strategies, 
-    # to ensure the API remains responsive for everyone. 
-    # Only make one request at a time. If you receive an HTTP response with a 429 status, 
-    # please wait a full minute before resuming API usage.
-
-    page_request_count = 0
-    while(page_request_count < max_retry_attempts):
-        page = requests.get(URL)
-        page_request_count += 1
-
-        if page.status_code == 404:
-            return "not found"
-
-        elif page.status_code == 429:
-            print(f"Status code 429: waiting {min_wait_time} seconds before retrying {URL}")
-            time.sleep(61)
-            continue
-        else:
-            soup = BeautifulSoup(page.content, "html.parser")
-            if soup.find("div", class_="is2d").find("p").get_text() == "This account is closed.":
-                return "closed"
-            else:
-                if soup.find("div", class_="warning tos_warning") is None:
-                    return "open"
-                else:
-                    account_status = soup.find_all("div", class_="warning tos_warning")[0].contents[-1]
-                    return account_status
-    print(f"{max_page_requests} page requests reached for {player_name}")
-    return "unknown"
-
-## test this to see how many requests lichess can handle or if the computation time is an issue
-## first attempt: 292 before timing out 
-
-all_players = all_player_features.reset_index()['player'].tolist()
-account_statuses = []
-for p in tqdm(all_players):
-    account_statuses.append(get_player_account_status(p))
-
-## add account status to dataframe
-all_player_features['account_status'] = account_statuses
-
 ## save to csv
-all_player_features.to_csv(f'../lichess_player_data/{FILE_NAME}_player_features.csv')
+all_player_features.to_csv(f'../lichess_player_data/{BASE_FILE_NAME}_player_features.csv')

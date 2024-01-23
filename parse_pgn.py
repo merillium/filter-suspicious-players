@@ -2,8 +2,8 @@ import os
 import pandas as pd
 import chess.pgn
 
-FILE_NAME = 'lichess_db_standard_rated_2015-01'
-PGN_FILE_PATH = f'../lichess-games-database/{FILE_NAME}.pgn'
+BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
+PGN_FILE_PATH = f'lichess-games-database/{BASE_FILE_NAME}.pgn'
 pgn = open(PGN_FILE_PATH)
 
 all_player_info = {}
@@ -24,8 +24,6 @@ all_player_info = {}
 #         ...
 #     }
 # }
-
-## this format facilities conversion to pandas DataFrame indexed by ['player', 'time control']
 
 def update_all_player_info(
     player: str,
@@ -142,10 +140,16 @@ while(True):
             print(f'{number_of_games_parsed} games parsed...')
 
 # convert to pandas DataFrame
-all_player_df = pd.DataFrame.from_dict(all_player_info, orient='index', 
-                                       columns=['ratings', 'opponent_ratings', 'actual_scores', 'rating_gains', 'increments'])
+all_player_df = pd.DataFrame.from_dict(
+    all_player_info, 
+    orient='index', 
+    columns=['ratings', 'opponent_ratings', 'actual_scores', 'rating_gains', 'increments']
+)
 
-all_player_games_exploded = all_player_df.explode(column=['ratings', 'opponent_ratings', 'actual_scores', 'rating_gains', 'increments'])
+# explode all_player_df to each row corresponds to one game
+all_player_games_exploded = all_player_df.explode(
+    column=['ratings', 'opponent_ratings', 'actual_scores', 'rating_gains', 'increments']
+)
 
 # save to csv
-all_player_games_exploded.to_csv(f'../lichess_player_data/{FILE_NAME}.csv')
+all_player_games_exploded.to_csv(f'../lichess_player_data/{BASE_FILE_NAME}.csv')
