@@ -1,20 +1,28 @@
-from ast import literal_eval
+import os
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-FILE_NAME = 'lichess_db_standard_rated_2015-01'
-all_player_features = pd.read_csv(f'../lichess_player_data/{FILE_NAME}_player_features.csv')
+## constants could eventually go into enums
+BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
+EXPLORATORY_PLOTS_FOLDER = 'exploratory_plots'
+
+if not os.path.exists(EXPLORATORY_PLOTS_FOLDER):
+    os.mkdir(EXPLORATORY_PLOTS_FOLDER)
+
+## load the player features dataframe
+all_player_features = pd.read_csv(f'lichess_player_data/{BASE_FILE_NAME}_player_features.csv')
 all_player_features = all_player_features[all_player_features['time_control'].isin(['bullet','blitz','classical'])]
 
 ## plot the distribution of mean rating gain for each rating bin
 for time_group, time_group_df in all_player_features.groupby('time_control'):
     fig = go.Figure()
     for rating_bin, rating_group in time_group_df.groupby('rating_bin'):
+        rating_bin_str = f"{rating_bin}-{rating_bin+100}"
         fig.add_trace(go.Violin(x=rating_group['mean_rating_gain'].values,
-                                name=rating_bin,
+                                name=rating_bin_str,
                                 box_visible=False,
                                 meanline_visible=False,
                                 opacity=0.5),
@@ -32,9 +40,10 @@ for time_group, time_group_df in all_player_features.groupby('time_control'):
 
     ## add markers to indicate the mean rating gain for each rating bin
     for rating_bin, rating_group in time_group_df.groupby('rating_bin'):
+        rating_bin_str = f"{rating_bin}-{rating_bin+100}"
         fig.add_trace(go.Scatter(
                     x=[rating_group['mean_rating_gain'].mean()],
-                    y=[rating_bin],
+                    y=[rating_bin_str],
                     mode='markers',
                     showlegend=False,
                     marker=dict(color='black', size=5),
@@ -42,15 +51,16 @@ for time_group, time_group_df in all_player_features.groupby('time_control'):
                 ))
     
     fig.add_vline(x=0, line_dash="dash", line_color='blue', line_width=2, opacity=0.5)
-    fig.show()
+    fig.write_html(f"exploratory_plots/{BASE_FILE_NAME}_{time_group}_rating_gain.html")
 
 
 ## plot distribution of mean_perf_diff
 for time_group, time_group_df in all_player_features.groupby('time_control'):
     fig = go.Figure()
     for rating_bin, rating_group in time_group_df.groupby('rating_bin'):
+        rating_bin_str = f"{rating_bin}-{rating_bin+100}"
         fig.add_trace(go.Violin(x=rating_group['mean_perf_diff'].values,
-                                name=rating_bin,
+                                name=rating_bin_str,
                                 box_visible=False,
                                 meanline_visible=False,
                                 opacity=0.5),
@@ -69,9 +79,10 @@ for time_group, time_group_df in all_player_features.groupby('time_control'):
                       xaxis_showgrid=False, xaxis_zeroline=False)
 
     for rating_bin, rating_group in time_group_df.groupby('rating_bin'):
+        rating_bin_str = f"{rating_bin}-{rating_bin+100}"
         fig.add_trace(go.Scatter(
                     x=[rating_group['mean_perf_diff'].mean()],
-                    y=[rating_bin],
+                    y=[rating_bin_str],
                     mode='markers',
                     showlegend=False,
                     marker=dict(color='black', size=5),
@@ -79,5 +90,5 @@ for time_group, time_group_df in all_player_features.groupby('time_control'):
                 ))
     
     fig.add_vline(x=0.0, line_dash="dash", line_color='blue', line_width=2, opacity=0.5)
-    fig.show()
+    fig.write_html(f"exploratory_plots/{BASE_FILE_NAME}_{time_group}_perf_diff.html")
 

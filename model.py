@@ -10,7 +10,9 @@ class PlayerAnomalyDetectionModel:
     .predict to make predictions on test data
     """
     def __init__(self):
-        self._thresholds = None
+        self._thresholds = {
+            ''
+        }
 
     ## this should contain some binary search type logic 
     ## to adjust the thresholds based on the feature

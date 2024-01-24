@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
 
-all_player_games_df = pd.read_csv(f'../lichess_player_data/{BASE_FILE_NAME}.csv', index_col=[0,1],)
+all_player_games_df = pd.read_csv(f'lichess_player_data/{BASE_FILE_NAME}.csv', index_col=[0,1],)
 all_player_games_df.index = all_player_games_df.index.set_names(['player','time_control'])
 
 ## filter out users who have not played enough games
@@ -90,4 +90,4 @@ all_player_features['rating_bin'] = pd.cut(all_player_features['mean_rating'], r
 # all_player_features['rating_bin_label'] = pd.cut(all_player_features['mean_rating'], rating_bins, right=True, labels=rating_bin_labels)
 
 ## save to csv
-all_player_features.to_csv(f'../lichess_player_data/{BASE_FILE_NAME}_player_features.csv')
+all_player_features.to_csv(f'lichess_player_data/{BASE_FILE_NAME}_player_features.csv')

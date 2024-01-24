@@ -4,6 +4,11 @@ import chess.pgn
 
 BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
 PGN_FILE_PATH = f'lichess-games-database/{BASE_FILE_NAME}.pgn'
+LICHESS_PLAYER_DATA_FOLDER = 'lichess_player_data'
+
+if not os.path.exists(LICHESS_PLAYER_DATA_FOLDER):
+    os.mkdir(LICHESS_PLAYER_DATA_FOLDER)
+
 pgn = open(PGN_FILE_PATH)
 
 all_player_info = {}
@@ -152,4 +157,4 @@ all_player_games_exploded = all_player_df.explode(
 )
 
 # save to csv
-all_player_games_exploded.to_csv(f'../lichess_player_data/{BASE_FILE_NAME}.csv')
+all_player_games_exploded.to_csv(f'{LICHESS_PLAYER_DATA_FOLDER}/{BASE_FILE_NAME}.csv')
