@@ -34,26 +34,28 @@ def get_player_account_status(player, account_statuses):
             account_statuses[player] = "tosViolation"
         elif user.get('disabled'):
             account_statuses[player] = "closed"
-        elif player == 'test':
-            time.sleep(10)
+        # elif player == 'test':
+        #     time.sleep(10)
         else:
             account_statuses[player] = "open"
     except ApiHttpError: 
         account_statuses[player] = "not found"
     
-    print(f"updated account statuses: {account_statuses}")
+    # print(f"updated account statuses: {account_statuses}")
 
-if __name__ == '__main__':
-    with multiprocessing.Manager() as manager:
-        account_statuses = manager.dict()
+# if __name__ == '__main__':
+#     with multiprocessing.Manager() as manager:
+#         account_statuses = manager.dict()
 
-        for player in tqdm(all_players):
-            p = multiprocessing.Process(target=get_player_account_status, args=(player, account_statuses))
-            p.start()
-            p.join(timeout=5)  # Set a timeout for the process to avoid hanging indefinitely
+#         player = 'test'
+#         get_player_account_status(player, account_statuses)
 
-            if p.is_alive():
-                p.terminate()
-                p.join()
+#         p = multiprocessing.Process(target=get_player_account_status, args=(player, account_statuses))
+#         p.start()
+#         p.join(timeout=5)  # Set a timeout for the process to avoid hanging indefinitely
 
-    updated_account_statuses = dict(account_statuses)
+#         if p.is_alive():
+#             p.terminate()
+#             p.join(5)
+
+#     updated_account_statuses = dict(account_statuses)
