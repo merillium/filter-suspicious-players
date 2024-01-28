@@ -2,6 +2,7 @@ Flask==2.3.3
 requests==2.31.0
 numpy==1.26.2
 pandas==2.1.4
+plotly==5.18.0
 python-chess==1.10.0
 python-lichess==0.10 # Client for lichess.org API
 

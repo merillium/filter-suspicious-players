@@ -7,6 +7,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from get_player_labels import get_player_account_status
 
+from enums import TimeControl
+
 BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
 MODEL_PLOTS_FOLDER = 'model_plots'
 SAVED_MODELS_FOLDER = 'saved_models'
@@ -17,15 +19,17 @@ class PlayerAnomalyDetectionModel:
     The PlayerAnomalyDetectionModel class returns a model with methods:
     .fit to tune the model's internal thresholds on training data
     .predict to make predictions on test data
+    .load_model to load a predefined model from a pkl file
     .save_model to save the model to a file
-    .load_model to load a model from a file
     """
     def __init__(self):
         self.is_fitted = False
         self._thresholds = {
-            'perf_delta_th': {
-                f"{rating_bin}-{rating_bin+100}": 0.15 for rating_bin in np.arange(0,4000,100)
+            (time_control,'perf_delta_thresholds'): {
+                f"{rating_bin}-{rating_bin+100}": 0.15
+                for rating_bin in np.arange(0,4000,100)
             }
+            for time_control in TimeControl.ALL.value
         } 
         self._account_statuses = {} # store account statuses for each model instance
         self._ACCOUNT_STATUS_SCORE_MAP = {
@@ -52,9 +56,13 @@ class PlayerAnomalyDetectionModel:
     def _set_thresholds(self, train_data, generate_plots=True):
         ## set thresholds by each rating bin, also updates player account statuses
         ## generate plots of threshold vs accuracy
-        for rating_bin, train_rating_bin_df in train_data.groupby('rating_bin'):
+        train_data_filtered = train_data[train_data['time_control'].isin(TimeControl.ALL.value)]
+        for group_tuple, train_rating_bin_df in train_data_filtered.groupby(['rating_bin','time_control']):
+            rating_bin, time_control = group_tuple
             rating_bin_key = f"{rating_bin}-{rating_bin+100}"
-            train_threshold = self._thresholds['perf_delta_th'][rating_bin_key]
+
+            ## start with the default threshold for each rating bin
+            train_threshold = self._thresholds[(time_control,'perf_delta_thresholds')][rating_bin_key]
             
             ## simple 1D grid search for the best threshold (this can be refined)
             delta_th = 0.01
@@ -112,7 +120,11 @@ class PlayerAnomalyDetectionModel:
                     best_train_metric = train_metric
                     best_threshold = train_threshold
                 train_threshold += delta_th
+
+            ## set the best threshold
+            self._thresholds[(time_control,'perf_delta_thresholds')][rating_bin_key] = best_threshold
             
+            ## generate plots by default
             if generate_plots:
                 fig = make_subplots(specs=[[{"secondary_y": True}]])
                 fig.add_trace(
@@ -137,7 +149,7 @@ class PlayerAnomalyDetectionModel:
                     annotation_text="Best Threshold"
                 )
             fig.update_layout(
-                title=f"Accuracy vs Threshold for Rating Bin {rating_bin_key}",
+                title=f"Accuracy vs Threshold for {time_control}: Rating Bin {rating_bin_key}",
                 xaxis_title="Threshold",
                 yaxis_title="Accuracy",
                 yaxis2_title="Number of Flagged Players",
@@ -145,10 +157,7 @@ class PlayerAnomalyDetectionModel:
             )
             if not os.path.exists(MODEL_PLOTS_FOLDER):
                 os.mkdir(MODEL_PLOTS_FOLDER)
-            fig.write_html(f"{MODEL_PLOTS_FOLDER}/{BASE_FILE_NAME}_model_threshold_{rating_bin_key}.html")
-
-            self._thresholds['perf_delta_th'][rating_bin_key] = best_threshold
-
+            fig.write_html(f"{MODEL_PLOTS_FOLDER}/{BASE_FILE_NAME}_model_thresholds_{time_control}_{rating_bin_key}.html")
 
     def predict(self, test_data: pd.DataFrame):
         """Returns pd.DataFrame or np.array of size k x m
@@ -158,9 +167,10 @@ class PlayerAnomalyDetectionModel:
         if not self.is_fitted:
             print("Warning: model is not fitted and will use default thresholds")
         
-        predictions = test_data.copy()
+        ## predictions are only made on known time controls
+        predictions = test_data[test_data['time_control'].isin(TimeControl.ALL.value)].copy()
         predictions['is_anomaly'] = predictions.apply(
-            lambda row: row['mean_perf_diff'] > self._thresholds['perf_delta_th'][
+            lambda row: row['mean_perf_diff'] > self._thresholds[(row['time_control'],'perf_delta_thresholds')][
                 f"{row['rating_bin']}-{row['rating_bin']+100}"
             ],
             axis=1

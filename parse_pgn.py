@@ -2,6 +2,8 @@ import os
 import pandas as pd
 import chess.pgn
 
+from enums import TimeControl
+
 BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
 PGN_FILE_PATH = f'lichess-games-database/{BASE_FILE_NAME}.pgn'
 LICHESS_PLAYER_DATA_FOLDER = 'lichess_player_data'

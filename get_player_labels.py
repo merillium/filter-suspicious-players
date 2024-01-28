@@ -29,6 +29,7 @@ account_statuses = {}
 def get_player_account_status(player, account_statuses):
     try:
         ## this will halt indefinitely if our request has hit the lichess API rate limit
+        time.sleep(0.01)
         user = lichess.api.user(player)
         if user.get('tosViolation'):
             account_statuses[player] = "tosViolation"
