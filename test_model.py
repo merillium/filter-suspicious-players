@@ -1,39 +1,65 @@
 import pandas as pd
+import pytest
+import unittest
 from model import PlayerAnomalyDetectionModel
 
-## sample code, this should be refactored into a unit test
+@pytest.fixture(scope="class")
+def get_sample_train_data():
+    sample_train_data = pd.DataFrame({
+        'player': [f'test_player{i}' for i in range(1,6+1)]*2,
+        'time_control': ['blitz']*6 + ['bullet']*6,
+        'number_of_games': [100]*12,
+        'mean_perf_diff': [0.155, 0.16, 0.17, 0.18, 0.19, 0.25] + [0.16, 0.17, 0.18, 0.19, 0.20, 0.26],
+        'std_perf_diff': [0.005]*12,
+        'mean_rating': [1510, 1520, 1530, 1540, 1550, 1560] + [1510, 1520, 1530, 1540, 1550, 1560],
+        'median_rating': [1510, 1520, 1530, 1540, 1550, 1560] + [1510, 1520, 1530, 1540, 1550, 1560],
+        'std_rating': [10]*12,
+        'mean_opponent_rating': [1510, 1520, 1530, 1540, 1550, 1560] + [1510, 1520, 1530, 1540, 1550, 1560],
+        'std_opponent_rating': [10]*12,
+        'mean_rating_gain': [1.00, -1.00, 1.00, -1.00, 1.00, -1.00] + [1.00, -1.00, 1.00, -1.00, 1.00, -1.00],
+        'std_rating_gain': [0.01]*12,
+        'proportion_increment_games': [1.00, 1.00, 1.00, 1.00, 1.00, 1.00] + [0.00, 0.00, 0.00, 0.00, 0.00, 0.00],
+        'rating_bin': [1500]*6 + [1600]*6,
+    })
+
+    return sample_train_data
+
+
+@pytest.mark.usefixtures("get_sample_train_data", "build_training_data")
+class TestPlayerAnomalyDetectionModel(unittest.TestCase):
     
-BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
-train_data = pd.read_csv(f'lichess_player_data/{BASE_FILE_NAME}_player_features.csv')
+    def setUp(self):
+        self.model = PlayerAnomalyDetectionModel()
 
-## training data: 6 players, 2 time controls
-# train_data = pd.DataFrame({
-#     'player': [f'player{i}' for i in range(1,6)] + [f'player{i}' for i in range(1,6)],
-#     'time_control': ['blitz']*6 + ['bullet']*6,
-#     'number_of_games': [100]*12,
-#     'mean_perf_diff': [-0.01, 0.01, 0.15, 0.22, 0.24, 0.21] + [-0.40, 0.20, 0.24, -0.10, -0.10, 0.00]
-#     'std_perf_diff': [0.005]*12,
-#     'mean_rating': [1510, 1520, 1530, 1540, 1550, 1560] + [1510, 1520, 1530, 1540, 1550, 1560],
-#     'median_rating': [1510, 1520, 1530, 1540, 1550, 1560] + [1510, 1520, 1530, 1540, 1550, 1560],
-#     'std_rating': [10]*12,
-#     'mean_opponent_rating': [1510, 1520, 1530, 1540, 1550, 1560] + [1510, 1520, 1530, 1540, 1550, 1560],
-#     'std_opponent_rating': [10]*12,
-#     'mean_rating_gain': [1.00, -1.00, 1.00, -1.00, 1.00, -1.00] + [1.00, -1.00, 1.00, -1.00, 1.00, -1.00],
-#     'std_rating_gain': [0.01]*12,
-#     'proportion_increment_games': [1.00, 1.00, 1.00, 1.00, 1.00, 1.00] + [0.00, 0.00, 0.00, 0.00, 0.00, 0.00],
-#     'rating_bin': ['1500 - 1600']*6 + ['1500 - 1600']*6,
-# })
+    @pytest.fixture(autouse=True)
+    def build_training_data(self, get_sample_train_data):
+        self.sample_train_data = get_sample_train_data
 
-## we will need to mock the player retreival functions
-def test_fit():
-    model = PlayerAnomalyDetectionModel()
-    pass
+    def test_fit(self):
 
-def test_predict():
-    model = PlayerAnomalyDetectionModel()
-    pass
+        ## this is a workaround to avoid calling get_player_account_status
+        self.model._account_statuses = {
+            'test_player1': 'open',
+            'test_player2': 'open',
+            'test_player3': 'tosViolation',
+            'test_player4': 'tosViolation',
+            'test_player5': 'tosViolation',
+            'test_player6': 'closed'
+        }
+        
+        ## expected thresholds are 0.16, 0.17 
+        ## and NOT the 0.15 default initially set within the model
+        expected_thresholds = self.model._thresholds.copy()
+        expected_thresholds[('blitz','perf_delta_thresholds')]['1500-1600'] = 0.16
+        expected_thresholds[('bullet','perf_delta_thresholds')]['1600-1700'] = 0.17
+        self.model.fit(self.sample_train_data, generate_plots=False)
+        assert expected_thresholds == self.model._thresholds
 
-model = PlayerAnomalyDetectionModel()
-model.fit(train_data)
-model.save_model(f'{BASE_FILE_NAME}_model')
-predictions = model.predict(train_data)
+    def test_predict(self):
+        pass
+
+    def test_save_model(self):
+        pass
+
+    def test_load_model(self):
+        pass

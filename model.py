@@ -3,11 +3,10 @@ import pickle
 from typing import Union
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from get_player_labels import get_player_account_status
 
 from enums import TimeControl
+from get_player_labels import get_player_account_status
+from model_plots import generate_model_threshold_plots
 
 BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
 MODEL_PLOTS_FOLDER = 'model_plots'
@@ -44,16 +43,16 @@ class PlayerAnomalyDetectionModel:
         """
         pass
 
-    def fit(self, train_data: pd.DataFrame):
+    def fit(self, train_data: pd.DataFrame, generate_plots=True):
         if self.is_fitted:
             pass 
             # issue a warning that the user is retraining the model! 
             # give the user the option to combine multiple training data sets
         else:
-            self._set_thresholds(train_data)
+            self._set_thresholds(train_data, generate_plots)
             self.is_fitted = True
 
-    def _set_thresholds(self, train_data, generate_plots=True):
+    def _set_thresholds(self, train_data, generate_plots):
         ## set thresholds by each rating bin, also updates player account statuses
         ## generate plots of threshold vs accuracy
         train_data_filtered = train_data[train_data['time_control'].isin(TimeControl.ALL.value)]
@@ -92,11 +91,13 @@ class PlayerAnomalyDetectionModel:
                     else:
                         pass
                 
+                print(f"updated account statuses: {self._account_statuses}")
+
                 ## get the account status for each player
                 train_predictions = [
                     self._account_statuses.get(player) for player in all_flagged_players
                 ]
-                
+
                 ## get the score for each player
                 train_scores = [
                     self._ACCOUNT_STATUS_SCORE_MAP.get(status) for status in train_predictions
@@ -126,43 +127,21 @@ class PlayerAnomalyDetectionModel:
             
             ## generate plots by default
             if generate_plots:
-                fig = make_subplots(specs=[[{"secondary_y": True}]])
-                fig.add_trace(
-                    go.Scatter(
-                        x=train_threshold_list,
-                        y=train_accuracy_list,
-                        name="Accuracy vs Threshold"
-                    ), secondary_y=False
+                generate_model_threshold_plots(
+                    BASE_FILE_NAME,
+                    MODEL_PLOTS_FOLDER,
+                    train_threshold_list,
+                    train_accuracy_list,
+                    train_number_of_flagged_players,
+                    best_threshold,
+                    time_control,
+                    rating_bin_key
                 )
-                fig.add_trace(
-                    go.Scatter(
-                        x=train_threshold_list,
-                        y=train_number_of_flagged_players,
-                        name="Number of Flagged Players"
-                    ), secondary_y=True
-                )
-                fig.add_vline(
-                    x=best_threshold,
-                    line_width=2,
-                    line_dash="dash",
-                    line_color="green",
-                    annotation_text="Best Threshold"
-                )
-            fig.update_layout(
-                title=f"Accuracy vs Threshold for {time_control}: Rating Bin {rating_bin_key}",
-                xaxis_title="Threshold",
-                yaxis_title="Accuracy",
-                yaxis2_title="Number of Flagged Players",
-                yaxis_range=[0, 1]
-            )
-            if not os.path.exists(MODEL_PLOTS_FOLDER):
-                os.mkdir(MODEL_PLOTS_FOLDER)
-            fig.write_html(f"{MODEL_PLOTS_FOLDER}/{BASE_FILE_NAME}_model_thresholds_{time_control}_{rating_bin_key}.html")
+
 
     def predict(self, test_data: pd.DataFrame):
-        """Returns pd.DataFrame or np.array of size k x m
-        where k = (player, time_control) are 
-        and m = number of features 
+        """Returns pd.DataFrame of size (m+2, k)
+        where k = number of flagged games, and m = number of features 
         """
         if not self.is_fitted:
             print("Warning: model is not fitted and will use default thresholds")

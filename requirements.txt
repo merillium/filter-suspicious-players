@@ -5,5 +5,6 @@ pandas==2.1.4
 plotly==5.18.0
 python-chess==1.10.0
 python-lichess==0.10 # Client for lichess.org API
+mock==5.1.0
 
 debugpy # Required for debugging.
