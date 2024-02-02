@@ -1,6 +1,6 @@
+import unittest
 import pandas as pd
 import pytest
-import unittest
 from model import PlayerAnomalyDetectionModel
 
 @pytest.fixture(scope="class")

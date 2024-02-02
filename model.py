@@ -4,13 +4,11 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-from enums import TimeControl
+from enums import TimeControl, Folders
 from get_player_labels import get_player_account_status
 from model_plots import generate_model_threshold_plots
 
 BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
-MODEL_PLOTS_FOLDER = 'model_plots'
-SAVED_MODELS_FOLDER = 'saved_models'
 
 
 class PlayerAnomalyDetectionModel:
@@ -91,8 +89,6 @@ class PlayerAnomalyDetectionModel:
                     else:
                         pass
                 
-                print(f"updated account statuses: {self._account_statuses}")
-
                 ## get the account status for each player
                 train_predictions = [
                     self._account_statuses.get(player) for player in all_flagged_players
@@ -129,7 +125,7 @@ class PlayerAnomalyDetectionModel:
             if generate_plots:
                 generate_model_threshold_plots(
                     BASE_FILE_NAME,
-                    MODEL_PLOTS_FOLDER,
+                    Folders.MODEL_PLOTS.value,
                     train_threshold_list,
                     train_accuracy_list,
                     train_number_of_flagged_players,
@@ -165,10 +161,10 @@ class PlayerAnomalyDetectionModel:
 
     def save_model(
         self, 
-        saved_models_folder = SAVED_MODELS_FOLDER, 
+        saved_models_folder = Folders.SAVED_MODELS.value, 
         model_name: str = "player_anomaly_detection_model"
     ):
-        if not os.path.exists(SAVED_MODELS_FOLDER):
-            os.mkdir(SAVED_MODELS_FOLDER)
-        with open(f'{SAVED_MODELS_FOLDER}/{BASE_FILE_NAME}_{model_name}.pkl', 'wb') as f:
+        if not os.path.exists(Folders.SAVED_MODELS.value):
+            os.mkdir(Folders.SAVED_MODELS.value)
+        with open(f'{Folders.SAVED_MODELS.value}/{BASE_FILE_NAME}_{model_name}.pkl', 'wb') as f:
             pickle.dump(self._thresholds, f)

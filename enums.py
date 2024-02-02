@@ -6,3 +6,7 @@ class TimeControl(Enum):
     RAPID = 'rapid'
     CLASSICAL = 'classical'
     ALL = ['bullet', 'blitz', 'rapid', 'classical']
+
+class Folders(Enum):
+    MODEL_PLOTS = 'model_plots'
+    SAVED_MODELS = 'saved_models'
