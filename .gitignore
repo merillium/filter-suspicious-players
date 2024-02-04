@@ -1,6 +1,6 @@
 .*
+**/__pycache__/
 !/.gitignore
-__pycache__
 lichess_player_data/
 lichess-games-database/
 exploratory_plots/

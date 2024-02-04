@@ -19,17 +19,21 @@ The model is built on the assumption that cheating is a rare occurrence in any d
 
 ### Sample code:
 ```python
+import pandas as pd
+from player_account_handler import PlayerAccountHandler
+from model import PlayerAnomalyDetectionModel
 BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
 train_data = pd.read_csv(f'lichess_player_data/{BASE_FILE_NAME}_player_features.csv')
-model = PlayerAnomalyDetectionModel()
+player_account_handler = PlayerAccountHandler()
+model = PlayerAnomalyDetectionModel(player_account_handler)
 model.fit(train_data)
 model.save_model(f'{BASE_FILE_NAME}_model')
 predictions = model.predict(train_data)
 ```
 
 ### Unit Tests
-Currently working on the following unit test(s) which can be run with the following command:
-```pytest test_model.py```
+Currently working on unit tests, which can be run with the following command:
+```make test```, or if you want to run test files individually ```PYTHONPATH=. pytest tests/test_model.py```
 
 To-do:
 - write a bash script to download and unzip data from the lichess.org open database
