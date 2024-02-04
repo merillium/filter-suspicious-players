@@ -40,7 +40,6 @@ def get_sample_train_data():
 
 @pytest.mark.usefixtures("get_sample_train_data", "build_training_data")
 class TestPlayerAnomalyDetectionModel(unittest.TestCase):
-
     @mock.patch(
         "player_account_handler.PlayerAccountHandler.update_player_account_status"
     )
@@ -53,7 +52,6 @@ class TestPlayerAnomalyDetectionModel(unittest.TestCase):
         self.sample_train_data = get_sample_train_data
 
     def test_fit(self):
-
         ## this is a workaround to avoid calling get_player_account_status
         self.model._player_account_handler._account_statuses = {
             "test_player1": "open",

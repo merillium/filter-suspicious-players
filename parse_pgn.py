@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import chess.pgn
-
 from enums import TimeControl
 
 BASE_FILE_NAME = "lichess_db_standard_rated_2015-01"
@@ -56,7 +55,7 @@ def update_all_player_info(
         }
 
     # exclude a rating of 1500.0 exactly as this could be a first game
-    # refine analysis by excluding the first N0 = 10 games if the first rating is 1500.0
+    # refine analysis by excluding the first N_0 = 10 games if the first rating is 1500.0
     elif (all_player_info.get((player, time_control)) is None) & (
         current_rating == 1500.0
     ):
@@ -85,16 +84,16 @@ while True:
 
     # get time control
     event = headers["Event"]
-    if "bullet" in event.lower():
-        time_control = "bullet"
-    elif "blitz" in event.lower():
-        time_control = "blitz"
-    elif "rapid" in event.lower():
-        time_control = "rapid"
-    elif "classical" in event.lower():
-        time_control = "classical"
+    if TimeControl.BULLET.value in event.lower():
+        time_control = TimeControl.BULLET.value
+    elif TimeControl.BLITZ.value in event.lower():
+        time_control = TimeControl.BLITZ.value
+    elif TimeControl.RAPID.value in event.lower():
+        time_control = TimeControl.RAPID.value
+    elif TimeControl.CLASSICAL.value in event.lower():
+        time_control = TimeControl.CLASSICAL.value
     else:
-        time_control = "other"
+        time_control = TimeControl.OTHER.value
 
     # get info for both players
     white_player, black_player = headers.get("White"), headers.get("Black")

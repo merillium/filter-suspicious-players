@@ -8,7 +8,7 @@ Currently the app is not functional, and has not been deployed. If cloning this 
 This is a simple statistical model that flags players who have performed a certain threshold above their expected performance under the Glicko-2 rating system. The expected performance takes into account all player's complete game history and opponents in the span of the training data. The thresholds are initialized to default values, but are then adjusted separately for each 100 point rating bin in the training data.
 
 ### Model Training
-We define `N` as the number of players who have performed above some threshold, and the estimated number of cheaters as `X = 0.00 * N_open + 0.75 * N_closed + 1.00 * N_violation` where `N_open` is the number of players with open accounts, `N_closed` is the number of players with closed accounts, and `N_violation` is the number of players with a terms of service violation (where `N = N_open + N_closed + N_violation`), the metric used to evaluate the performance of the threshold is the `log(N+1) * X / N`. This a simple metric intended to reward the model for `high accuracy = X / N`` in detecting suspicious players without flagging too many players (observationally, if the threshold is too low, the accuracy will decrease faster than log(N)). Note that for a threshold that is too high and flags 0 players, the metric will be 0. This metric may be fine-tuned in the future, but is sufficient for a POC.
+We define `N` as the number of players who have performed above some threshold, and the estimated number of cheaters as `X = 0.00 * N_open + 0.75 * N_closed + 1.00 * N_violation` where `N_open` is the number of players with open accounts, `N_closed` is the number of players with closed accounts, and `N_violation` is the number of players with a terms of service violation (where `N = N_open + N_closed + N_violation`), the metric used to evaluate the performance of the threshold is the `log(N+1) * X / N`. This is a simple metric intended to reward the model for `high accuracy = X / N` in detecting suspicious players without flagging too many players (observationally, if the threshold is too low, the accuracy will decrease faster than log(N)). Note that for a threshold that is too high and flags 0 players, the metric will be 0. This metric may be fine-tuned in the future, but is sufficient for a POC.
 
 Below is an example of the threshold vs accuracy plot below for players in the 1200-1300 range based on training data from the month of Jan 2015.
 
@@ -20,6 +20,7 @@ The model is built on the assumption that cheating is a rare occurrence in any d
 ### Sample code:
 ```python
 import pandas as pd
+
 from player_account_handler import PlayerAccountHandler
 from model import PlayerAnomalyDetectionModel
 BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'

@@ -30,7 +30,7 @@ class PlayerAnomalyDetectionModel:
             for time_control in TimeControl.ALL.value
         }
         self._player_account_handler = player_account_handler
-        self._ACCOUNT_STATUS_SCORE_MAP = {
+        self._account_status_score_map = {
             "open": 0,
             "tosViolation": 1,
             "closed": 0.75,  # weight closed account as closer to a tosViolation
@@ -43,13 +43,12 @@ class PlayerAnomalyDetectionModel:
         pass
 
     def fit(self, train_data: pd.DataFrame, generate_plots=True):
-        if self.is_fitted:
-            pass
-            # issue a warning that the user is retraining the model!
-            # give the user the option to combine multiple training data sets
-        else:
+        if not self.is_fitted:
             self._set_thresholds(train_data, generate_plots)
             self.is_fitted = True
+        else:
+            print("Warning: model is already fitted")
+            pass
 
     def _set_thresholds(self, train_data, generate_plots):
         ## set thresholds by each rating bin, also updates player account statuses
@@ -78,7 +77,6 @@ class PlayerAnomalyDetectionModel:
             train_number_of_flagged_players = []
 
             while True:
-
                 all_flagged_players = train_rating_bin_df[
                     train_rating_bin_df["mean_perf_diff"] > train_threshold
                 ]["player"].tolist()
@@ -107,7 +105,7 @@ class PlayerAnomalyDetectionModel:
 
                 ## get the score for each player
                 train_scores = [
-                    self._ACCOUNT_STATUS_SCORE_MAP.get(status)
+                    self._account_status_score_map.get(status)
                     for status in train_predictions
                 ]
 

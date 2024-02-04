@@ -16,9 +16,7 @@ class PlayerAccountHandler:
     'open' = account in good standing
     'not found' = account does not exist (this should not happen)
 
-    Note:
-
-    From lichess api documentation:
+    From the lichess api documentation:
     All requests are rate limited using various strategies,
     to ensure the API remains responsive for everyone.
     Only make one request at a time. If you receive an HTTP response with a 429 status,

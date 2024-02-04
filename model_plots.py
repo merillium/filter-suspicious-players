@@ -4,8 +4,8 @@ from plotly.subplots import make_subplots
 
 
 def generate_model_threshold_plots(
-    BASE_FILE_NAME,
-    MODEL_PLOTS_FOLDER,
+    base_file_name,
+    model_plots_folder,
     train_threshold_list,
     train_accuracy_list,
     train_number_of_flagged_players,
@@ -13,6 +13,8 @@ def generate_model_threshold_plots(
     time_control,
     rating_bin_key,
 ):
+    """Generate model threshold plots showing accuracy and number of players vs model threshold(s)."""
+
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     fig.add_trace(
         go.Scatter(
@@ -42,8 +44,8 @@ def generate_model_threshold_plots(
         yaxis2_title="Number of Flagged Players",
         yaxis_range=[0, 1],
     )
-    if not os.path.exists(MODEL_PLOTS_FOLDER):
-        os.mkdir(MODEL_PLOTS_FOLDER)
+    if not os.path.exists(model_plots_folder):
+        os.mkdir(model_plots_folder)
     fig.write_html(
-        f"{MODEL_PLOTS_FOLDER}/{BASE_FILE_NAME}_model_thresholds_{time_control}_{rating_bin_key}.html"
+        f"{model_plots_folder}/{base_file_name}_model_thresholds_{time_control}_{rating_bin_key}.html"
     )

@@ -1,8 +1,5 @@
-import lichess.api
 import numpy as np
 import pandas as pd
-from bs4 import BeautifulSoup
-from tqdm import tqdm
 
 BASE_FILE_NAME = "lichess_db_standard_rated_2015-01"
 
@@ -31,11 +28,11 @@ all_player_games_filtered_df = all_player_games_df.loc[
 ## and this comment left by @chess_in_sgv:
 
 # Let P2 = Expected outcome for player 2. Then:
-# P2 = 1 / (1 + e-A)
-# with A = g(sqrt(r12+r22)) * (s2-s1))
+# P2 = 1 / (1 + e^-a)
+# with a = g(sqrt(r12+r22)) * (s2-s1))
 # and g(x) = 1/sqrt(1+3x2/pi2)
 
-##  source: https://www.reddit.com/r/chess/comments/i0pnv1/comment/fzrhhwi/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+##  source: https://www.reddit.com/r/chess/comments/i0pnv1/comment/fzrhhwi
 
 
 def g(x):
@@ -46,7 +43,9 @@ def get_player_expected_score(
     player_rating, opponent_rating, player_rd=80.0, opponent_rd=80.0
 ):
     """Returns expected score of player based on player rating, opponent rating, and RDs (if known)."""
-    A = g(np.sqrt(player_rd**2 + opponent_rd**2)) * (player_rating - opponent_rating)
+    A = g(np.sqrt(player_rd**2 + opponent_rd**2)) * (
+        player_rating - opponent_rating
+    )
     return 1 / (1 + np.exp(-A))
 
 
@@ -86,7 +85,7 @@ all_player_features = all_player_games_filtered_df.groupby(
     proportion_increment_games=("increments", "mean"),
 )
 
-## some [potentially] useful red flags for suspicious behavior:
+## some useful red flags for suspicious behavior:
 # (1) consistently performing above expectation
 # (i.e. mean performance difference far from 0.00 with low standard deviation performance difference)
 # we may refine this to drop the low standard deviation performance difference condition
@@ -111,7 +110,6 @@ rating_bin_labels = [f"{str(int(x))} - {str(int(x)+100)}" for x in rating_bins[:
 all_player_features["rating_bin"] = pd.cut(
     all_player_features["mean_rating"], rating_bins, right=True, labels=rating_bins[:-1]
 ).astype(int)
-# all_player_features['rating_bin_label'] = pd.cut(all_player_features['mean_rating'], rating_bins, right=True, labels=rating_bin_labels)
 
 ## save to csv
 all_player_features.to_csv(f"lichess_player_data/{BASE_FILE_NAME}_player_features.csv")

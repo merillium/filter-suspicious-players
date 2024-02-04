@@ -1,9 +1,6 @@
 import os
-import numpy as np
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from enums import Folders
 
 ## constants could eventually go into enums
@@ -58,7 +55,7 @@ for time_group, time_group_df in all_player_features.groupby("time_control"):
                 y=[rating_bin_str],
                 mode="markers",
                 showlegend=False,
-                marker=dict(color="black", size=5),
+                marker={"color": "black", "size": 5},
                 marker_symbol="diamond",
             )
         )
@@ -107,7 +104,7 @@ for time_group, time_group_df in all_player_features.groupby("time_control"):
                 y=[rating_bin_str],
                 mode="markers",
                 showlegend=False,
-                marker=dict(color="black", size=5),
+                marker={"color": "black", "size": 5},
                 marker_symbol="diamond",
             )
         )
