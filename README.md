@@ -20,9 +20,9 @@ The model is built on the assumption that cheating is a rare occurrence in any d
 ### Sample code:
 ```python
 import pandas as pd
-
 from player_account_handler import PlayerAccountHandler
 from model import PlayerAnomalyDetectionModel
+
 BASE_FILE_NAME = 'lichess_db_standard_rated_2015-01'
 train_data = pd.read_csv(f'lichess_player_data/{BASE_FILE_NAME}_player_features.csv')
 player_account_handler = PlayerAccountHandler()
