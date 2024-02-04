@@ -1,4 +1,4 @@
-# filter-suspicious-players
+# filter_suspicious_players
 
 This is a work-in-progress package that retrieves training data from the [lichess.org open database](https://database.lichess.org/), then trains a statistical model to detect suspicious players.
 
