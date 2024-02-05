@@ -7,8 +7,8 @@ from enums import Folders
 BASE_FILE_NAME = "lichess_db_standard_rated_2015-01"
 
 
-if not os.path.exists(Folders.EXPLORATORY_PLOTS_FOLDER.value):
-    os.mkdir(Folders.EXPLORATORY_PLOTS_FOLDER.value)
+if not os.path.exists(Folders.EXPLORATORY_PLOTS.value):
+    os.mkdir(Folders.EXPLORATORY_PLOTS.value)
 
 ## load the player features dataframe
 all_player_features = pd.read_csv(
@@ -62,7 +62,7 @@ for time_group, time_group_df in all_player_features.groupby("time_control"):
 
     fig.add_vline(x=0, line_dash="dash", line_color="blue", line_width=2, opacity=0.5)
     fig.write_html(
-        f"{Folders.EXPLORATORY_PLOTS_FOLDER.value}/{BASE_FILE_NAME}_{time_group}_rating_gain.html"
+        f"{Folders.EXPLORATORY_PLOTS.value}/{BASE_FILE_NAME}_{time_group}_rating_gain.html"
     )
 
 
@@ -111,5 +111,5 @@ for time_group, time_group_df in all_player_features.groupby("time_control"):
 
     fig.add_vline(x=0.0, line_dash="dash", line_color="blue", line_width=2, opacity=0.5)
     fig.write_html(
-        f"{Folders.EXPLORATORY_PLOTS_FOLDER.value}/{BASE_FILE_NAME}_{time_group}_perf_diff.html"
+        f"{Folders.EXPLORATORY_PLOTS.value}/{BASE_FILE_NAME}_{time_group}_perf_diff.html"
     )
