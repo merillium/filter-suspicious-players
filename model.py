@@ -82,9 +82,6 @@ class PlayerAnomalyDetectionModel:
                 ]["player"].tolist()
 
                 number_of_flagged_players = len(all_flagged_players)
-                print(
-                    f"number of flagged players in {rating_bin_key} = {number_of_flagged_players}"
-                )
 
                 ## break if threshold is large enough to filter out all players
                 if number_of_flagged_players == 0:
@@ -93,9 +90,6 @@ class PlayerAnomalyDetectionModel:
                 ## set the account status for each player
                 for player in all_flagged_players:
                     self._player_account_handler.update_player_account_status(player)
-
-                print("updated account statuses:")
-                print(self._player_account_handler._account_statuses)
 
                 ## get the account status for each player
                 train_predictions = [
