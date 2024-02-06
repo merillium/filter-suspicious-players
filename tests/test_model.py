@@ -72,7 +72,7 @@ def get_sample_test_data():
 
 
 @pytest.mark.usefixtures("get_sample_train_data", "build_training_data")
-@pytest.mark.usefixtures("get_sample_test_data", "build_training_data")
+@pytest.mark.usefixtures("get_sample_test_data", "build_test_data")
 class TestPlayerAnomalyDetectionModel(unittest.TestCase):
     @mock.patch(
         "player_account_handler.PlayerAccountHandler.update_player_account_status"

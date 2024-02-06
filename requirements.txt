@@ -8,6 +8,5 @@ python-lichess==0.10 # Client for lichess.org API
 mock==5.1.0
 pylint==3.0.3
 pytest==7.0.1
-pytest-dependency==0.6.0
 
 debugpy # Required for debugging.
