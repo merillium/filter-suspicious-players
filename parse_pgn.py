@@ -1,16 +1,11 @@
+import argparse
 import os
 import pandas as pd
 import chess.pgn
-from enums import TimeControl
+import zstandard as zstd
+from enums import TimeControl, Folders
+from pathlib import Path
 
-BASE_FILE_NAME = "lichess_db_standard_rated_2015-01"
-PGN_FILE_PATH = f"lichess-games-database/{BASE_FILE_NAME}.pgn"
-LICHESS_PLAYER_DATA_FOLDER = "lichess_player_data"
-
-if not os.path.exists(LICHESS_PLAYER_DATA_FOLDER):
-    os.mkdir(LICHESS_PLAYER_DATA_FOLDER)
-
-pgn = open(PGN_FILE_PATH)
 
 all_player_info = {}
 # dictionary storing player info in the following format:
@@ -73,115 +68,136 @@ def update_all_player_info(
         all_player_info[(player, time_control)]["increments"].append(is_increment)
 
 
-number_of_games_parsed = 0
-while True:
-    game = chess.pgn.read_game(pgn)
-    if game is None:
-        print(f"{number_of_games_parsed} [valid] games parsed.")
-        break
+def parse_pgn(PGN_FILE_PATH):
+    print(f"Parsing {PGN_FILE_PATH}...")
 
-    headers = game.headers
+    if not os.path.exists(Folders.LICHESS_PLAYER_DATA.value):
+        os.mkdir(Folders.LICHESS_PLAYER_DATA.value)
 
-    # get time control
-    event = headers["Event"]
-    if TimeControl.BULLET.value in event.lower():
-        time_control = TimeControl.BULLET.value
-    elif TimeControl.BLITZ.value in event.lower():
-        time_control = TimeControl.BLITZ.value
-    elif TimeControl.RAPID.value in event.lower():
-        time_control = TimeControl.RAPID.value
-    elif TimeControl.CLASSICAL.value in event.lower():
-        time_control = TimeControl.CLASSICAL.value
-    else:
-        time_control = TimeControl.OTHER.value
+    pgn = open(PGN_FILE_PATH)
 
-    # get info for both players
-    white_player, black_player = headers.get("White"), headers.get("Black")
-    white_rating, black_rating = headers.get("WhiteElo"), headers.get("BlackElo")
-    white_gain, black_gain = headers.get("WhiteRatingDiff"), headers.get(
-        "BlackRatingDiff"
-    )
-    increment = headers["TimeControl"][0]
-    result = headers["Result"]
+    # parse the pgn file, and extract information from each game
+    number_of_games_parsed = 0
+    while True:
+        game = chess.pgn.read_game(pgn)
+        if game is None:
+            print(f"{number_of_games_parsed} [valid] games parsed.")
+            break
 
-    # skip games with unknown players, ratings, rating difference, or result
-    # if either opponent has not played rated games, their rating is 1500
-    # but a rating difference is not calculated because this rating is misleading
-    # therefore, we will exclude such games
-    skip_game_condition = (
-        ("?" in white_player)
-        | ("?" in black_player)
-        | (white_player is None)
-        | (black_player is None)
-        | ("?" in str(white_rating))
-        | ("?" in str(black_rating))
-        | (white_gain is None)
-        | (black_gain is None)
-        | (result not in ["1-0", "0-1", "1/2-1/2"])
-    )
-    if skip_game_condition:
-        continue
-    else:
-        white_score = 1 if result == "1-0" else 0.5 if result == "1/2-1/2" else 0
-        black_score = 0 if result == "1-0" else 0.5 if result == "1/2-1/2" else 1
+        headers = game.headers
 
-        ## only convert rating and rating gain to a number once we know it's not None
-        white_rating = float(white_rating)
-        black_rating = float(black_rating)
-        white_gain = float(white_gain)
-        black_gain = float(black_gain)
+        # get time control
+        event = headers["Event"]
+        if TimeControl.BULLET.value in event.lower():
+            time_control = TimeControl.BULLET.value
+        elif TimeControl.BLITZ.value in event.lower():
+            time_control = TimeControl.BLITZ.value
+        elif TimeControl.RAPID.value in event.lower():
+            time_control = TimeControl.RAPID.value
+        elif TimeControl.CLASSICAL.value in event.lower():
+            time_control = TimeControl.CLASSICAL.value
+        else:
+            time_control = TimeControl.OTHER.value
 
-        is_increment = 0 if increment == "0" else 1
-
-        # update white player info
-        update_all_player_info(
-            player=white_player,
-            time_control=time_control,
-            current_rating=white_rating,
-            opponent_rating=black_rating,
-            score=white_score,
-            rating_gain=white_gain,
-            is_increment=is_increment,
+        # get info for both players
+        white_player, black_player = headers.get("White"), headers.get("Black")
+        white_rating, black_rating = headers.get("WhiteElo"), headers.get("BlackElo")
+        white_gain, black_gain = headers.get("WhiteRatingDiff"), headers.get(
+            "BlackRatingDiff"
         )
+        increment = headers["TimeControl"][0]
+        result = headers["Result"]
 
-        # update black player info
-        update_all_player_info(
-            player=black_player,
-            time_control=time_control,
-            current_rating=black_rating,
-            opponent_rating=white_rating,
-            score=black_score,
-            rating_gain=black_gain,
-            is_increment=is_increment,
+        # skip games with unknown players, ratings, rating difference, or result
+        # if either opponent has not played rated games, their rating is 1500
+        # but a rating difference is not calculated because this rating is misleading
+        # therefore, we will exclude such games
+        skip_game_condition = (
+            ("?" in white_player)
+            | ("?" in black_player)
+            | (white_player is None)
+            | (black_player is None)
+            | ("?" in str(white_rating))
+            | ("?" in str(black_rating))
+            | (white_gain is None)
+            | (black_gain is None)
+            | (result not in ["1-0", "0-1", "1/2-1/2"])
         )
+        if skip_game_condition:
+            continue
+        else:
+            white_score = 1 if result == "1-0" else 0.5 if result == "1/2-1/2" else 0
+            black_score = 0 if result == "1-0" else 0.5 if result == "1/2-1/2" else 1
 
-        number_of_games_parsed += 1
-        if number_of_games_parsed % 10000 == 0:
-            print(f"{number_of_games_parsed} games parsed...")
+            ## only convert rating and rating gain to a number once we know it's not None
+            white_rating = float(white_rating)
+            black_rating = float(black_rating)
+            white_gain = float(white_gain)
+            black_gain = float(black_gain)
 
-# convert to pandas DataFrame
-all_player_df = pd.DataFrame.from_dict(
-    all_player_info,
-    orient="index",
-    columns=[
-        "ratings",
-        "opponent_ratings",
-        "actual_scores",
-        "rating_gains",
-        "increments",
-    ],
-)
+            is_increment = 0 if increment == "0" else 1
 
-# explode all_player_df to each row corresponds to one game
-all_player_games_exploded = all_player_df.explode(
-    column=[
-        "ratings",
-        "opponent_ratings",
-        "actual_scores",
-        "rating_gains",
-        "increments",
-    ]
-)
+            # update white player info
+            update_all_player_info(
+                player=white_player,
+                time_control=time_control,
+                current_rating=white_rating,
+                opponent_rating=black_rating,
+                score=white_score,
+                rating_gain=white_gain,
+                is_increment=is_increment,
+            )
 
-# save to csv
-all_player_games_exploded.to_csv(f"{LICHESS_PLAYER_DATA_FOLDER}/{BASE_FILE_NAME}.csv")
+            # update black player info
+            update_all_player_info(
+                player=black_player,
+                time_control=time_control,
+                current_rating=black_rating,
+                opponent_rating=white_rating,
+                score=black_score,
+                rating_gain=black_gain,
+                is_increment=is_increment,
+            )
+
+            number_of_games_parsed += 1
+            if number_of_games_parsed % 10000 == 0:
+                print(f"{number_of_games_parsed} games parsed...")
+
+    # convert to pandas DataFrame
+    all_player_df = pd.DataFrame.from_dict(
+        all_player_info,
+        orient="index",
+        columns=[
+            "ratings",
+            "opponent_ratings",
+            "actual_scores",
+            "rating_gains",
+            "increments",
+        ],
+    )
+
+    # explode all_player_df to each row corresponds to one game
+    all_player_games_exploded = all_player_df.explode(
+        column=[
+            "ratings",
+            "opponent_ratings",
+            "actual_scores",
+            "rating_gains",
+            "increments",
+        ]
+    )
+
+    # save to csv
+    base_filename = Path(PGN_FILE_PATH).stem.split(".")[0]
+    all_player_games_exploded.to_csv(
+        f"{Folders.LICHESS_PLAYER_DATA.value}/{base_filename}.csv"
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Parse PGN file")
+    parser.add_argument("PGN_FILE_PATH", type=str, help="Path to the PGN file")
+    args = parser.parse_args()
+
+    ## parse PGN file
+    parse_pgn(args.PGN_FILE_PATH)

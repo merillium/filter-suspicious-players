@@ -6,7 +6,6 @@ from enums import Folders
 ## constants could eventually go into enums
 BASE_FILE_NAME = "lichess_db_standard_rated_2015-01"
 
-
 if not os.path.exists(Folders.EXPLORATORY_PLOTS.value):
     os.mkdir(Folders.EXPLORATORY_PLOTS.value)
 

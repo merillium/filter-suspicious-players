@@ -2,7 +2,7 @@
 **/__pycache__/
 !/.gitignore
 lichess_player_data/
-lichess-games-database/
+lichess_downloaded_games/
 exploratory_plots/
 model_plots/
 saved_models/

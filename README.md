@@ -1,8 +1,15 @@
 # filter_suspicious_players
 
-This is a work-in-progress package that retrieves training data from the [lichess.org open database](https://database.lichess.org/), then trains a statistical model to detect suspicious players.
+This is a work-in-progress package that retrieves training data from the [lichess.org open database](https://database.lichess.org/), then trains a statistical model to detect suspicious players. Currently the app is not functional, and has not yet been built.
 
-Currently the app is not functional, and has not been deployed. If cloning this repo for personal use, the structure of the python scripts assumes that there is a folder called `lichess-games-database` to which .pgn and .pgn.zst files are downloaded and unzipped (this may be automated in the future using a bash script), and that there is a folder called `lichess_player_data` to which .csv files are saved (this folder is created by `parse_pgn.py` if it doesn't exist).
+### Data Download and Preprocessing
+To download and preprocess data from the lichess.org open database, you can run the following command:
+
+```bash
+python3 download_and_preprocess_data.py --year 2015 --month 1 --filetype lichess-open-database
+```
+
+The `download_and_preprocess_data.py` script downloads the `.pgn.zst` file corresponding to the month and year specified, decompresses the `.pgn` file, and creates the `lichess_downloaded_games` directory to which both files are saved. Then the script preprocesses the `.pgn` file and extracts relevant features, creates the `lichess_player_data` directory, to which a `.csv` file is saved. By default, all raw files in the `lichess_downloaded_games` directory are then deleted because they are typically large and not needed after preprocessing. (This process can be streamlined by directly reading from the decompressed `.pgn` file instead of first saving it)
 
 ### Model Description
 This is a simple statistical model that flags players who have performed a certain threshold above their expected performance under the Glicko-2 rating system. The expected performance takes into account each player's complete game history and opponents in the span of the training data. The thresholds are initialized to default values, and then adjusted separately for each 100 point rating bin in the training data.
@@ -37,7 +44,9 @@ Currently working on unit tests, which can be run with the following command:
 ```make test```, or if you want to run test files individually ```PYTHONPATH=. pytest tests/test_model.py```
 
 To-do:
-- write a bash script to download and unzip data from the lichess.org open database
+- restructure `make_player_features.py` to parse arguments from `download_and_preprocess_data.py`
 - complete data labelling using lichess API calls, with a workaround or retry request if API rate limiting occurs 
 - write unit tests for scripts that perform feature extraction and data labelling
 - write unit tests for `PlayerAnomalyDetectionModel` class and methods (in-progress)
+- possible benchmarks for length of time to execute data downloading, preprocessing, and model training depending
+on the size of the raw data

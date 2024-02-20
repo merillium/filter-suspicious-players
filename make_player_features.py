@@ -43,9 +43,7 @@ def get_player_expected_score(
     player_rating, opponent_rating, player_rd=80.0, opponent_rd=80.0
 ):
     """Returns expected score of player based on player rating, opponent rating, and RDs (if known)."""
-    A = g(np.sqrt(player_rd**2 + opponent_rd**2)) * (
-        player_rating - opponent_rating
-    )
+    A = g(np.sqrt(player_rd**2 + opponent_rd**2)) * (player_rating - opponent_rating)
     return 1 / (1 + np.exp(-A))
 
 
