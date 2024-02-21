@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import os
 import pickle
 from typing import Union
@@ -7,8 +8,6 @@ import pandas as pd
 from enums import TimeControl, Folders
 from player_account_handler import PlayerAccountHandler
 from model_plots import generate_model_threshold_plots
-
-BASE_FILE_NAME = "lichess_db_standard_rated_2015-01"
 
 
 class PlayerAnomalyDetectionModel:
@@ -35,10 +34,17 @@ class PlayerAnomalyDetectionModel:
             "tosViolation": 1,
             "closed": 0.75,  # weight closed account as closer to a tosViolation
         }
+        self._threshold_metrics = {
+            (time_control, "perf_delta_thresholds"): {
+                f"{rating_bin}-{rating_bin+100}": None
+                for rating_bin in np.arange(0, 4000, 100)
+            }
+            for time_control in TimeControl.ALL.value
+        }
 
     def load_model(self, model_file_name: str):
         """
-        Loads a model from a file
+        Loads a model from a file. Not yet implemented.
         """
         pass
 
@@ -56,8 +62,8 @@ class PlayerAnomalyDetectionModel:
         train_data_filtered = train_data[
             train_data["time_control"].isin(TimeControl.ALL.value)
         ]
-        for group_tuple, train_rating_bin_df in train_data_filtered.groupby(
-            ["rating_bin", "time_control"]
+        for group_tuple, train_rating_bin_df in tqdm(
+            train_data_filtered.groupby(["rating_bin", "time_control"])
         ):
             rating_bin, time_control = group_tuple
             rating_bin_key = f"{rating_bin}-{rating_bin+100}"
@@ -127,6 +133,13 @@ class PlayerAnomalyDetectionModel:
                 rating_bin_key
             ] = best_threshold
 
+            self._threshold_metrics[(time_control, "perf_delta_thresholds")][
+                rating_bin_key
+            ] = best_train_metric
+
+            ## we need to integrate this into the model logic properly
+            BASE_FILE_NAME = "test"
+
             ## generate plots by default
             if generate_plots:
                 generate_model_threshold_plots(
@@ -170,12 +183,13 @@ class PlayerAnomalyDetectionModel:
 
     def save_model(
         self,
-        saved_models_folder=Folders.SAVED_MODELS.value,
         model_name: str = "player_anomaly_detection_model",
+        saved_models_folder=Folders.SAVED_MODELS.value,
     ):
         if not os.path.exists(Folders.SAVED_MODELS.value):
             os.mkdir(Folders.SAVED_MODELS.value)
-        with open(
-            f"{Folders.SAVED_MODELS.value}/{BASE_FILE_NAME}_{model_name}.pkl", "wb"
-        ) as f:
+        if os.path.exists(f"{Folders.SAVED_MODELS.value}/{model_name}"):
+            model_name = model_name + "_"
+
+        with open(f"{Folders.SAVED_MODELS.value}/{model_name}.pkl", "wb") as f:
             pickle.dump(self._thresholds, f)

@@ -37,6 +37,8 @@ def update_all_player_info(
     is_increment: int,
     all_player_info: dict = all_player_info,
 ) -> None:
+    """Updates all_player_info dictionary with the information from a single game."""
+
     # this particular (player, time control) has not been added to all_player_info
     if (all_player_info.get((player, time_control)) is None) & (
         current_rating != 1500.0
@@ -69,6 +71,10 @@ def update_all_player_info(
 
 
 def parse_pgn(PGN_FILE_PATH):
+    """Parses the pgn file and extracts information from each game, calls update_all_player_info after each game,
+    and creates a DataFrameom from all_player_info which is then written to a csv file.
+    """
+
     print(f"Parsing {PGN_FILE_PATH}...")
 
     if not os.path.exists(Folders.LICHESS_PLAYER_DATA.value):
@@ -188,9 +194,9 @@ def parse_pgn(PGN_FILE_PATH):
     )
 
     # save to csv
-    base_filename = Path(PGN_FILE_PATH).stem.split(".")[0]
+    BASE_FILE_NAME = Path(PGN_FILE_PATH).stem.split(".")[0]
     all_player_games_exploded.to_csv(
-        f"{Folders.LICHESS_PLAYER_DATA.value}/{base_filename}.csv"
+        f"{Folders.LICHESS_PLAYER_DATA.value}/{BASE_FILE_NAME}.csv"
     )
 
 

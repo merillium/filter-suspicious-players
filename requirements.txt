@@ -9,5 +9,6 @@ mock==5.1.0
 pylint==3.0.3
 pytest==7.0.1
 pyzstd==0.15.9
+tqdm==4.66.1
 
 debugpy # Required for debugging.
