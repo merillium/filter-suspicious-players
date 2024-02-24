@@ -1,6 +1,6 @@
 # filter_suspicious_players
 
-This is a work-in-progress package that retrieves training data from the [lichess.org open database](https://database.lichess.org/), then trains a statistical model to detect suspicious players. Currently the app is not functional, and has not yet been built.
+This is a work-in-progress package that retrieves training data from the [lichess.org open database](https://database.lichess.org/), then trains a statistical model to detect suspicious players. Currently the app is still in development.
 
 ### Data Download and Preprocessing
 To download and preprocess data from the lichess.org open database, you can run the following command (specifying the year and month of the data you want to download, and the source of the data to be `lichess-open-database`):
@@ -9,7 +9,7 @@ To download and preprocess data from the lichess.org open database, you can run 
 python3 download_and_preprocess.py --year 2015 --month 1 --source lichess-open-database
 ```
 
-The `download_and_preprocess.py` script downloads the `.pgn.zst` file corresponding to the month and year specified, decompresses the `.pgn` file, and creates the `lichess_downloaded_games` directory to which both files are saved. Then the script preprocesses the `.pgn` file and extracts relevant features, creates the `lichess_player_data` directory, to which a `.csv` file is saved. By default, all raw files in the `lichess_downloaded_games` directory are then deleted because they are typically large and not needed after preprocessing. (This process can be streamlined by directly reading from the decompressed `.pgn` file instead of first saving it)
+The `download_and_preprocess.py` script downloads the `.pgn.zst` file corresponding to the month and year specified, decompresses the `.pgn` file, and creates the `lichess_downloaded_games` directory to which both files are saved. Then the script preprocesses the `.pgn` file and extracts relevant features, creates the `lichess_player_data` directory, to which a `.csv` file is saved. By default, exploratory plots are generated, and then all raw files in the `lichess_downloaded_games` directory are deleted because they are typically large and not needed after preprocessing. (This process can be streamlined by directly reading from the decompressed `.pgn` file instead of first saving it)
 
 ### Model Description
 This is a simple statistical model that flags players who have performed a certain threshold above their expected performance under the Glicko-2 rating system. The expected performance takes into account each player's complete game history and opponents in the span of the training data. The thresholds are initialized to default values, and then adjusted separately for each 100 point rating bin in the training data.

@@ -73,8 +73,17 @@ def preprocess_data(filename, remove_raw_files):
     )
     subprocess.run(["python3", "make_player_features.py", CSV_RAW_FEATURES_FILE_PATH])
 
+    ## make exploratory plots
+    CSV_PLAYER_FEATURE_FILE_PATH = (
+        f"{Folders.LICHESS_PLAYER_DATA.value}/{BASE_FILE_NAME}_player_features.csv"
+    )
+    subprocess.run(
+        ["python3", "make_exploratory_plots.py", CSV_PLAYER_FEATURE_FILE_PATH]
+    )
+
     # Remove the downloaded .pgn.zst and .pgn files
     if remove_raw_files:
+        print("Cleaning up downloaded files...")
         os.remove(PGN_FILE_PATH)
         os.remove(ZST_FILE_PATH)
 
@@ -89,6 +98,11 @@ def main():
         help="Source of the file to download",
         choices=["lichess-open-database"],
         required=True,
+    )
+    parser.add_argument(
+        "--generate-exploratory-plots",
+        action="store_true",
+        help="Generate exploratory plots",
     )
     parser.add_argument(
         "--remove-raw-files",
