@@ -79,6 +79,7 @@ class PlayerAnomalyDetectionModel:
             best_train_metric = 0.00
 
             train_accuracy_list = []
+            train_metric_list = []
             train_threshold_list = []
             train_number_of_flagged_players = []
 
@@ -121,6 +122,7 @@ class PlayerAnomalyDetectionModel:
                 ## a threshold that flags 100 players with 0.50 accuracy
                 ## is worse than a threshold that flags 20 players with 1.00 accuracy
                 train_metric = np.log(number_of_flagged_players + 1) * train_accuracy
+                train_metric_list.append(train_metric)
 
                 ## update the best threshold
                 if train_metric > best_train_metric:
@@ -147,6 +149,7 @@ class PlayerAnomalyDetectionModel:
                     Folders.MODEL_PLOTS.value,
                     train_threshold_list,
                     train_accuracy_list,
+                    train_metric_list,
                     train_number_of_flagged_players,
                     best_threshold,
                     time_control,

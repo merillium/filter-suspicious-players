@@ -9,6 +9,13 @@ To download and preprocess data from the lichess.org open database, you can run 
 python3 download_and_preprocess.py --year 2015 --month 1 --source lichess-open-database
 ```
 
+Warning: preprocessing will take a long time to complete for more recent data which can be well over 20 GB in size. You can use caffeinate to prevent your computer from going to sleep while the script is running.
+
+```bash
+caffeinate -is python3 download_and_preprocess.py --year 2015 --month 1 --source lichess-open-database
+```
+
+
 The `download_and_preprocess.py` script downloads the `.pgn.zst` file corresponding to the month and year specified, decompresses the `.pgn` file, and creates the `lichess_downloaded_games` directory to which both files are saved. Then the script preprocesses the `.pgn` file and extracts relevant features, creates the `lichess_player_data` directory, to which a `.csv` file is saved. By default, exploratory plots are generated, and then all raw files in the `lichess_downloaded_games` directory are deleted because they are typically large and not needed after preprocessing. (This process can be streamlined by directly reading from the decompressed `.pgn` file instead of first saving it)
 
 ### Model Description
@@ -16,13 +23,6 @@ This is a simple statistical model that flags players who have performed a certa
 
 ### Model Training
 We define `N` as the number of players who have performed above some threshold, and the estimated number of cheaters as `X = 0.00 * N_open + 0.75 * N_closed + 1.00 * N_violation` where `N_open` is the number of players with open accounts, `N_closed` is the number of players with closed accounts, and `N_violation` is the number of players with a terms of service violation (where `N = N_open + N_closed + N_violation`), the metric used to evaluate the performance of the threshold is the `log(N+1) * X / N`. This is a simple metric intended to reward the model for `high accuracy = X / N` in detecting suspicious players without flagging too many players (observationally, if the threshold is too low, the accuracy will decrease faster than `log(N)`). Note that for a threshold that is too high and flags 0 players, the metric will be 0. This metric may be fine-tuned in the future, but is sufficient for a POC.
-
-Below is an example of the threshold vs accuracy plot below for players in the 1400-1500 range for classical chess based on training data from the month of Jan 2015.
-
-![sample threshold vs accuracy plot](images/sample_model_threshold.png)
-
-### Assumptions
-The model is built on the assumption that cheating is a rare occurrence in any data set on which the model is trained. There may be unexpected behavior if the training data is composed predomininantly of players who are cheating. The model will retain its default thresholds in the event that no players have shown any significant deviations from the mean expected performance in their rating bin. 
 
 ### Sample code:
 ```python
@@ -38,6 +38,28 @@ model.fit(train_data)
 model.save_model(f'{BASE_FILE_NAME}_model')
 predictions = model.predict(train_data)
 ```
+
+### Model Evaluation
+
+When the model is fitted, there are accuracy metric vs threshold figures that are saved to the `model_plots` directory as json files. The figure object can be loaded from the json file, as shown in the example code snippet below:
+
+```python
+import json
+import plotly.io as pio
+
+f = open('model_plots/test_model_thresholds_classical_1400-1500.json')
+data = json.load(f)
+
+fig = pio.from_json(data)
+fig.show()
+```
+
+Below is an example of the threshold vs accuracy plot below for players in the 1400-1500 range for classical chess based on training data from the month of Jan 2015.
+
+![sample threshold vs accuracy plot](images/sample_model_threshold.png)
+
+### Assumptions
+The model is built on the assumption that cheating is a rare occurrence in any data set on which the model is trained. There may be unexpected behavior if the training data is composed predomininantly of players who are cheating. The model will retain its default thresholds in the event that no players have shown any significant deviations from the mean expected performance in their rating bin. 
 
 ### Unit Tests
 Currently working on unit tests, which can be run with the following command:
