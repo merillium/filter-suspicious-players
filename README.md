@@ -2,6 +2,12 @@
 
 This is a work-in-progress package that retrieves training data from the [lichess.org open database](https://database.lichess.org/), then trains a statistical model to detect suspicious players. Currently the app is still in development.
 
+## Installing Dependencies
+To install dependencies, run the following command:
+```bash
+pip install -r requirements.txt
+```
+
 ### Data Download and Preprocessing
 To download and preprocess data from the lichess.org open database, you can run the following command (specifying the year and month of the data you want to download, and the source of the data to be `lichess-open-database`):
 
